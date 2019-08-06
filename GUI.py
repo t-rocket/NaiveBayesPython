@@ -106,21 +106,20 @@ def load_structure(structure_file_path):
 def prepare_data(data_path,num_of_bins):
     df = pd.read_csv(data_path)
 
-    print df.dtypes
     for key in data_structure.keys():
         data = data_structure[key]
-
+        df[key].replace('', np.nan, inplace=True)
         if (data == 'NUMERIC'):
-            print key
-            df[key].replace('',np.nan,inplace=True)
             key_mean_value = df.pivot_table(key, columns='class', aggfunc='mean')
             for classification in data_structure['class']:
                 df.loc[(df['class'] == classification) & (np.isnan(df[key])), key] = key_mean_value[classification][key]
-                df[key] = pd.cut(df[key], bins=num_of_bins, labels=range(1, num_of_bins + 1),
-                                   include_lowest=True)
+
+            df[key] = pd.cut(df[key], bins=num_of_bins, labels=range(1, num_of_bins + 1), include_lowest=True)
         else:
             must_common = df[key].value_counts().argmax()
             df[key].replace(np.nan, must_common, inplace=True)
+
+
 
     return df
 
