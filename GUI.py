@@ -4,17 +4,13 @@ import tkinter
 import os
 import re
 import tkMessageBox
-
-
 import numpy as np
 import pandas as pd
-
-
 
 from tkinter import ttk
 from tkinter.filedialog import askdirectory
 from tkinter.filedialog import askopenfilename
-from os.path import isfile, join
+
 
 data_structure = {}
 df_train = None
@@ -60,8 +56,10 @@ def setUnClassifiedLocation():
         btn_Build.config(state='normal')
 
 def write_result(result):
-    with open(path + "output.txt", "a") as file:
-        file.write(file_name+","+prediction+"\n")
+
+    with open(path + "/output.txt", "w") as file:
+        for i in range(len(result)):
+            file.write(str(i + 1)+" "+result[i]+"\n")
 
 def runPredict():
     global df_test
@@ -73,15 +71,17 @@ def runPredict():
             raise ValueError("Negative integer")
     except ValueError:
         tkMessageBox.showerror("Naive Bayes Classifier","Please enter a positive integer")
+        return
 
     test_file_path = path + "/test.csv"
 
     df_test = prepare_data(test_file_path,num_of_bins)
 
-    print df_test
     result = NaiveBayesClassifier()
 
     write_result(result)
+
+    tkMessageBox.showinfo("Naive Bayes Classifier", "Classification finished")
 
 
 def NaiveBayesClassifier():
@@ -117,11 +117,10 @@ def NaiveBayesClassifier():
                 max_score = float(probability_attribute_givven_class) * (float(n)/float(len(df_train['class'])))
                 max_class = classification
 
-            print max_score
 
         result.append(max_class)
 
-    print result
+    return result
 
 
 def equal_width(num_of_bins,df,attribute):
@@ -167,10 +166,12 @@ def prepare_data(data_path,num_of_bins):
     for key in data_structure.keys():
         data = data_structure[key]
         df[key].replace('', np.nan, inplace=True)
+
         if (data == 'NUMERIC'):
             key_mean_value = df.pivot_table(key, columns='class', aggfunc='mean')
             for classification in data_structure['class']:
                 df.loc[(df['class'] == classification) & (np.isnan(df[key])), key] = key_mean_value[classification][key]
+
 
             #print pd.cut(df[key], bins=num_of_bins, labels=range(1, num_of_bins + 1), include_lowest=True)
             if (df_train is None):
