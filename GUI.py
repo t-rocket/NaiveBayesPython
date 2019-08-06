@@ -15,7 +15,7 @@ from tkinter.filedialog import askopenfilename
 data_structure = {}
 df_train = None
 df_test = None
-path = "d:/documents/users/talmalu/Documents/Work"
+path = ""
 lower = {}
 upper = {}
 
@@ -35,25 +35,19 @@ def setModelLocation():
 
 def setUnClassifiedLocation():
     global path
-    path = openDirectory()
+
+    temp_path = openDirectory()
+
+    if (path != temp_path):
+        btn_Classify.config(state='disabled')
+
+    path = temp_path
+    tf_directoryPath.config(state='normal')
     tf_directoryPath.delete(0,'end')
     tf_directoryPath.insert(0,path)
+    tf_directoryPath.config(state='disabled')
 
-    train_file_path = path + "/train.csv"
-    structure_file_path = path + "/Structure.txt"
-    test_file_path = path + "/test.csv"
-
-    if (os.path.exists(test_file_path) == False):
-        print "test file not exist"
-    if (os.path.exists(structure_file_path) == False):
-        print "test file not exist"
-    if (os.path.exists(train_file_path) == False):
-        print "test file not exist"
-
-    if (os.path.exists(train_file_path) == False or os.path.exists(structure_file_path) == False or os.path.exists(test_file_path) == False):
-        btn_Build.config(state='disabled')
-    else:
-        btn_Build.config(state='normal')
+    btn_Build.config(state='normal')
 
 def write_result(result):
 
@@ -75,20 +69,21 @@ def runPredict():
 
     test_file_path = path + "/test.csv"
 
+    if (os.path.exists(test_file_path) == False):
+        tkMessageBox.showerror("Naive Bayes Classifier", "test.csv file has not found in directory:" + path)
+        return
+
+
     df_test = prepare_data(test_file_path,num_of_bins)
-
     result = NaiveBayesClassifier()
-
     write_result(result)
-
-    tkMessageBox.showinfo("Naive Bayes Classifier", "Classification finished")
+    tkMessageBox.showinfo("Naive Bayes Classifier", "Classification finished.\n You can view the result in " + path + "/output.txt")
 
 
 def NaiveBayesClassifier():
     global df_train
     global df_test
     global data_structure
-
 
     result = []
     m = 2;
@@ -117,7 +112,6 @@ def NaiveBayesClassifier():
                 max_score = float(probability_attribute_givven_class) * (float(n)/float(len(df_train['class'])))
                 max_class = classification
 
-
         result.append(max_class)
 
     return result
@@ -142,7 +136,6 @@ def equal_width(num_of_bins,df,attribute):
 
 
 def load_structure(structure_file_path):
-
 
     file = open(structure_file_path, 'r')
     data_structure = {}
@@ -196,9 +189,13 @@ def train_model():
     global data_structure
     global path
 
+    btn_Classify.config(state='disable')
+
     df_train = None
     data_structure = {}
-    path = "d:/documents/users/talmalu/Documents/Work"
+
+    train_file_path = path + "/train.csv"
+    structure_file_path = path + "/Structure.txt"
 
     try:
         num_of_bins = int(tf_DiscretizationBins.get())
@@ -207,10 +204,19 @@ def train_model():
     except ValueError:
         tkMessageBox.showerror("Naive Bayes Classifier","Please enter a positive integer")
 
-    train_file_path = path + "/train.csv"
-    structure_file_path = path + "/Structure.txt"
+    if (os.path.exists(structure_file_path) == False):
+        tkMessageBox.showerror("Naive Bayes Classifier", "Structure.txt file was not found in directory:" + path)
+        return
+    if (os.path.exists(train_file_path) == False):
+        tkMessageBox.showerror("Naive Bayes Classifier", "train.csv file was not found in directory:" + path)
+        return
+
+
+
     data_structure = load_structure(structure_file_path)
     df_train = prepare_data(train_file_path,num_of_bins)
+
+    tkMessageBox.showinfo("Naive Bayes Classifier", "Building classifier using train - set is done!")
     btn_Classify.config(state='normal')
 
 
@@ -221,9 +227,8 @@ root.geometry('600x400')
 label1 = ttk.Label(root, text='Directory Path')
 label1.place(x=20, y=30)
 
-tf_directoryPath = ttk.Entry(root, width=50)
+tf_directoryPath = ttk.Entry(root, width=50,state='disabled')
 tf_directoryPath.place(x=20, y=50)
-tf_directoryPath.insert(0, "d:/documents/users/talmalu/Documents/Work")
 
 btn_borwseDirectoryPath = ttk.Button(root, text='Browse', command=setUnClassifiedLocation)
 btn_borwseDirectoryPath.place(x=350, y=47.5)
